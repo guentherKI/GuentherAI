@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Günther KI</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Fira Code', monospace;
+      background-color: #1e1e1e;
+      color: #ccc;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 200px;
+      background-color: #111;
+      border-right: 1px solid #444;
+      display: flex;
+      flex-direction: column;
+      padding-top: 20px;
+    }
+
+    .sidebar li {
+      list-style: none;
+      padding: 15px 20px;
+      color: #bbb;
+      cursor: pointer;
+      transition: 0.2s;
+      border-left: 4px solid transparent;
+    }
+
+    .sidebar li:hover {
+      background-color: #222;
+    }
+
+    .sidebar li.active {
+      background-color: #222;
+      color: #61dafb;
+      border-left: 4px solid #61dafb;
+    }
+
+    .main-panel {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 20px;
+    }
+
+    .chat-header {
+      padding: 16px;
+      border-bottom: 1px solid #444;
+      font-size: 20px;
+      color: #61dafb;
+    }
+
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      background-color: #2b2b2b;
+      border-radius: 10px;
+      flex-grow: 1;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .chat-output {
+      flex-grow: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chat-output .user {
+      align-self: flex-end;
+      background: #444;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      max-width: 70%;
+    }
+
+    .chat-output .ai {
+      align-self: flex-start;
+      background: #333;
+      color: #0f0;
+      padding: 10px 14px;
+      border-radius: 10px;
+      max-width: 70%;
+    }
+
+    .chat-input {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #444;
+      background-color: #2b2b2b;
+    }
+
+    .chat-input input {
+      flex-grow: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      background-color: #222;
+      color: #0f0;
+      font-family: 'Fira Code', monospace;
+    }
+
+    .chat-input button {
+      background-color: #282c34;
+      color: #fff;
+      border: none;
+      margin-left: 10px;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .chat-input button:hover {
+      background-color: #3c4048;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="sidebar">
+    <ul>
+      <li class="active">Chat</li>
+      <li>Einstellungen</li>
+    </ul>
+  </nav>
+
+  <!-- Chat Panel -->
+  <div id="chatPanel" class="main-panel">
+    <div class="chat-header">🧠 Günther KI</div>
+
+    <div class="chat-container">
+      <div class="chat-output" id="chatOutput">
+        <div class="ai">Hallo, ich bin Günther. Was willst du wissen?</div>
+      </div>
+
+      <div class="chat-input">
+        <input type="text" id="chatInput" placeholder="Frag Günther..." />
+        <button onclick="sendMessage()">Senden</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BACKEND_URL = "http://localhost:5000"; // <-- anpassen bei Bedarf
+    let animationInterval;
+
+    function startThinkingAnimation(element) {
+      let dots = "";
+      animationInterval = setInterval(() => {
+        dots = dots.length < 3 ? dots + "." : "";
+        element.textContent = "⏳ Günther denkt nach" + dots;
+      }, 500);
+    }
+
+    function stopThinkingAnimation() {
+      clearInterval(animationInterval);
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+      if (!message) return;
+
+      const chat = document.getElementById('chatOutput');
+
+      const userMsg = document.createElement('div');
+      userMsg.className = 'user';
+      userMsg.textContent = message;
+      chat.appendChild(userMsg);
+
+      const aiMsg = document.createElement('div');
+      aiMsg.className = 'ai';
+      aiMsg.textContent = '⏳ Günther denkt nach...';
+      chat.appendChild(aiMsg);
+
+      input.value = '';
+      setTimeout(() => {
+        chat.scrollTop = chat.scrollHeight;
+      }, 0);
+
+      startThinkingAnimation(aiMsg);
+
+      fetch(BACKEND_URL + "/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
+      })
+      .then(res => res.json())
+      .then(data => {
+        stopThinkingAnimation();
+        aiMsg.textContent = data.reply || "❌ Günther hat keine Antwort.";
+      })
+      .catch(() => {
+        stopThinkingAnimation();
+        aiMsg.textContent = "❌ Fehler beim Antworten.";
+      });
+    }
+
+    document.getElementById('chatInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendMessage();
+    });
+  </script>
+
+</body>
+</html>
