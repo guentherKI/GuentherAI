@@ -140,7 +140,7 @@ def generate(prompt, max_len=200, temperature=1.0):
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-@app.route("/ask", methods=["POST"])
+@app.route("/ask", methods=["POST, GET, HEAD"])
 def ask():
     data = request.get_json()
     prompt = data.get("message", "").strip()
